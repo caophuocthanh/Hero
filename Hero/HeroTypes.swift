@@ -22,17 +22,6 @@
 
 import UIKit
 
-@objc public protocol HeroInteractiveContext {
-  var container:UIView! { get }
-  var presenting:Bool { get }
-
-  func update(progress:Double)
-  func end()
-  func cancel()
-  func temporarilySet(view:UIView, with modifiers:String)
-  var toViewController:UIViewController? {get}
-}
-
 public protocol HeroPreprocessor {
   func process(context:HeroContext, fromViews:[UIView], toViews:[UIView])
 }
@@ -44,11 +33,11 @@ public protocol HeroAnimator {
   
   func seekTo(timePassed:TimeInterval)
   func resume(timePassed:TimeInterval, reverse:Bool) -> TimeInterval
-  func temporarilySet(view:UIView, to modifiers:HeroModifiers)
+  func temporarilySet(view:UIView, composition:HeroComposition)
 }
 
 @objc public protocol HeroViewControllerDelegate{
-  @objc optional func wantInteractiveHeroTransition(context:HeroInteractiveContext) -> Bool
+  @objc optional func wantInteractiveHeroTransition() -> Bool
 
   @objc optional func heroWillStartAnimatingFrom(viewController:UIViewController)
   @objc optional func heroDidEndAnimatingFrom(viewController:UIViewController)

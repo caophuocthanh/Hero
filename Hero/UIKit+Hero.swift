@@ -22,10 +22,13 @@
 
 import UIKit
 
+fileprivate let parameterRegex = "(?:\\-?\\d+(\\.?\\d+)?)|\\w+"
+fileprivate let modifiersRegex = "(\\w+)(?:\\(([^\\)]*)\\))?"
+
 public extension UIView{
   private struct AssociatedKeys {
     static var HeroID    = "ht_heroID"
-    static var HeroModifiers = "ht_heroModifiers"
+    static var HeroModifiers = "ht_heroModifers"
   }
   
   @IBInspectable public var heroID: String? {
@@ -42,20 +45,62 @@ public extension UIView{
       )
     }
   }
-  @IBInspectable public var heroModifiers: String? {
+  public var heroModifiers: [HeroModifier]? {
     get {
-      return objc_getAssociatedObject(self, &AssociatedKeys.HeroModifiers) as? String
+      return objc_getAssociatedObject(self, &AssociatedKeys.HeroModifiers) as? [HeroModifier]
     }
     
     set {
       objc_setAssociatedObject(
         self,
         &AssociatedKeys.HeroModifiers,
-        newValue as NSString?,
+        newValue,
         .OBJC_ASSOCIATION_RETAIN_NONATOMIC
       )
     }
   }
+
+  #if TARGET_INTERFACE_BUILDER
+  @IBInspectable public var heroModifierString: String? {
+    get { return nil }
+    set {}
+  }
+  #else
+  public var heroModifierString: String? {
+    get { fatalError() }
+    set {
+      guard let newValue = newValue else {
+        heroModifiers = nil
+        return
+      }
+      let modifierString = newValue as NSString
+      func matches(for regex: String, text:NSString) -> [NSTextCheckingResult] {
+        do {
+          let regex = try NSRegularExpression(pattern: regex)
+          return regex.matches(in: text as String, range: NSRange(location: 0, length: text.length))
+        } catch let error {
+          print("invalid regex: \(error.localizedDescription)")
+          return []
+        }
+      }
+      var modifiers = [HeroModifier]()
+      for r in matches(for: modifiersRegex, text:modifierString){
+        var parameters = [String]()
+        if r.numberOfRanges > 2, r.rangeAt(2).location < modifierString.length{
+          let parameterString = modifierString.substring(with: r.rangeAt(2)) as NSString
+          for r in matches(for: parameterRegex, text: parameterString){
+            parameters.append(parameterString.substring(with: r.range))
+          }
+        }
+        let name = modifierString.substring(with: r.rangeAt(1))
+        if let modifier = HeroModifier(name: name, parameters: parameters){
+          modifiers.append(modifier)
+        }
+      }
+      heroModifiers = modifiers
+    }
+  }
+  #endif
 
   func slowSnapshotView() -> UIView{
     UIGraphicsBeginImageContextWithOptions(bounds.size, isOpaque, 0)
@@ -73,24 +118,6 @@ public extension UIView{
 }
 
 public extension UIViewController{
-  private struct AssociatedKeys {
-    static var HeroTransition    = "ht_heroTransition"
-  }
-  private var hero: Hero? {
-    get {
-      return objc_getAssociatedObject(self, &AssociatedKeys.HeroTransition) as? Hero
-    }
-    
-    set {
-      objc_setAssociatedObject(
-        self,
-        &AssociatedKeys.HeroTransition,
-        newValue as Hero?,
-        .OBJC_ASSOCIATION_RETAIN_NONATOMIC
-      )
-    }
-  }
-
   @IBInspectable public var isHeroEnabled: Bool {
     get {
       return ((transitioningDelegate as? Hero) != nil)
@@ -99,13 +126,12 @@ public extension UIViewController{
     set {
       guard newValue != isHeroEnabled else { return }
       if newValue{
-        hero = Hero()
-        transitioningDelegate = hero
+        transitioningDelegate = Hero.shared
         if let navi = self as? UINavigationController{
-          navi.delegate = hero
+          navi.delegate = Hero.shared
         }
         if let tab = self as? UITabBarController{
-          tab.delegate = hero
+          tab.delegate = Hero.shared
         }
       } else {
         if isHeroEnabled {
@@ -117,7 +143,6 @@ public extension UIViewController{
         if let tab = self as? UITabBarController, let _ = tab.delegate as? Hero{
           tab.delegate = nil
         }
-        hero = nil
       }
     }
   }
@@ -137,7 +162,7 @@ public extension UIViewController{
       let container = self.view.superview!
       let oldTransitionDelegate = next.transitioningDelegate
       next.isHeroEnabled = true
-      next.hero!.transition(from: self, to: next, in: container) {
+      Hero.shared.transition(from: self, to: next, in: container) {
         if (oldTransitionDelegate as? Hero) == nil{
           next.isHeroEnabled = false
           next.transitioningDelegate = oldTransitionDelegate

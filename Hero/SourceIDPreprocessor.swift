@@ -25,14 +25,12 @@ import UIKit
 class SourceIDPreprocessor:HeroPreprocessor {
   public func process(context:HeroContext, fromViews:[UIView], toViews:[UIView]) {
     for fv in fromViews{
-      guard let options = context[fv, "sourceID"],
-            let id = options.get(0),
+      guard let id = context[fv]?.source,
             let tv = context.destinationView(for: id) else { continue }
       prepareFor(view: fv, targetView: tv, context: context)
     }
     for tv in toViews{
-      guard let options = context[tv, "sourceID"],
-            let id = options.get(0),
+      guard let id = context[tv]?.source,
             let fv = context.sourceView(for: id) else { continue }
       prepareFor(view: tv, targetView: fv, context: context)
     }
@@ -44,27 +42,18 @@ extension SourceIDPreprocessor {
     let targetPos = context.container.convert(targetView.layer.position, from: targetView.superview!)
     
     // remove incompatible options
-    for option in ["scale", "translate", "transform"]{
-      context[view, option] = nil
-    }
+    context[view]!.transform = nil
+    context[view]!.size = nil
     
-    context[view, "position"] = targetPos.modifierParameters
-    if view.bounds.size != targetView.bounds.size{
-      context[view, "size"] = targetView.bounds.size.modifierParameters
+    context[view]!.position = targetPos
+    if view.bounds.size != targetView.bounds.size {
+      context[view]!.size = targetView.bounds.size
     }
-    if view.layer.cornerRadius != targetView.layer.cornerRadius{
-      context[view, "cornerRadius"] = ["\(targetView.layer.cornerRadius)"]
+    if view.layer.cornerRadius != targetView.layer.cornerRadius {
+      context[view]!.cornerRadius = targetView.layer.cornerRadius
     }
-    if view.layer.transform != targetView.layer.transform{
-      context[view, "transform"] = targetView.layer.transform.modifierParameters
-    }
-    
-    if let rotateOptions = context[view, "rotate"]{
-      if let z = rotateOptions.get(3){
-        context[view, "rotate"] = [z]
-      } else if rotateOptions.count != 1{
-        context[view, "rotate"] = nil
-      }
+    if view.layer.transform != targetView.layer.transform {
+      context[view]!.transform = targetView.layer.transform
     }
   }
 }

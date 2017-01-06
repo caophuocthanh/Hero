@@ -61,35 +61,21 @@ public class CascadePreprocessor:HeroPreprocessor {
 
   public func process(context:HeroContext, fromViews:[UIView], toViews:[UIView]) {
     for fv in fromViews + toViews{
-      guard let options = context[fv, "cascade"],
-            let deltaTime = options.getCGFloat(0)
-        else { continue }
+      guard let (deltaTime, direction) = context[fv]?.cascade else { continue }
       
-      let directionString = options.get(1)
-      let direction = CascadeDirection(directionString ?? "") ?? .topToBottom
       var parentView = fv
       if let _  = fv as? UITableView, let wrapperView = fv.subviews.get(0) {
         parentView = wrapperView
       }
       
       let sortedSubviews = parentView.subviews.filter{
-        return context[$0, "matchedHeroID"] == nil
+        return context.pairedView(for: $0) == nil
       }.sorted(by: direction.comparator)
       
-      let initialDelay = options.getCGFloat(2) ?? 0
+      let initialDelay = context[fv]!.delay
       for (i, v) in sortedSubviews.enumerated(){
-        let cDelay = CGFloat(i) * deltaTime + initialDelay
-        context[v, "delay"] = ["\(cDelay)"]
-      }
-      
-      if let str = options.get(3), let shouldDelayMatchedChild = Bool(str), shouldDelayMatchedChild{
-        for v in parentView.subviews{
-          if context[v, "matchedHeroID"] != nil, let pairedView = context.pairedView(for: v){
-            let cDelay = CGFloat(sortedSubviews.count) * deltaTime + initialDelay
-            context[v, "delay"] = ["\(cDelay)"]
-            context[pairedView, "delay"] = ["\(cDelay)"]
-          }
-        }
+        let delay = TimeInterval(i) * deltaTime + initialDelay
+        context[v]?.delay = delay
       }
     }
   }

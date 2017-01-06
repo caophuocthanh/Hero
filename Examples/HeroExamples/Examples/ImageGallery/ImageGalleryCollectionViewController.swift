@@ -59,8 +59,8 @@ extension ImageGalleryViewController:UICollectionViewDataSource{
     let imageCell = collectionView.dequeueReusableCell(withReuseIdentifier: "item", for: indexPath) as! ImageCell
     imageCell.imageView.image = ImageLibrary.thumbnail(index:indexPath.item)
     imageCell.imageView.heroID = "image_\(indexPath.item)"
-    imageCell.imageView.heroModifiers = "zPosition(100)"
-    imageCell.heroModifiers = "fade translate(0, 150) rotate(-1,0,0) scale(0.8) zPosition(50)"
+    imageCell.imageView.heroModifierString = "zPosition(100)"
+    imageCell.heroModifierString = "fade translate(0, 150) rotate(-1,0,0) scale(0.8) zPosition(50)"
     return imageCell
   }
 }
@@ -85,16 +85,16 @@ extension ImageGalleryViewController:HeroViewControllerDelegate{
     // the start time until the last cascading animation have started
     // by default: the matched views will animate simutanously with the cascading views
     if (viewController as? ImageGalleryViewController) != nil || (viewController as? ImageViewController) != nil{
-      collectionView.heroModifiers = "cascade(0.015, bottomToTop, 0, true)"
+      collectionView.heroModifierString = "cascade(0.015, bottomToTop, 0, true)"
     } else {
-      collectionView.heroModifiers = "cascade(0.015, topToBottom)"
+      collectionView.heroModifierString = "cascade(0.015, topToBottom)"
     }
   }
   func heroWillStartAnimatingFrom(viewController: UIViewController) {
     if (viewController as? ImageGalleryViewController) != nil{
-      collectionView.heroModifiers = "cascade(0.015, topToBottom, 0.25)"
+      collectionView.heroModifierString = "cascade(0.015, topToBottom, 0.25)"
     } else {
-      collectionView.heroModifiers = "cascade(0.015, topToBottom)"
+      collectionView.heroModifierString = "cascade(0.015, topToBottom)"
     }
     if let vc = viewController as? ImageViewController,
       let originalCellIndex = vc.selectedIndex,

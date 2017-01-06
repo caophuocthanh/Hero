@@ -46,9 +46,9 @@ class ListTableViewController: UITableViewController {
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "item", for: indexPath)
 
-    cell.heroModifiers = "fade translate(-100, 0)"
+    cell.heroModifierString = "fade translate(-100, 0)"
     cell.imageView?.heroID = "image_\(indexPath.item)"
-    cell.imageView?.heroModifiers = "arc zPosition(10)"
+    cell.imageView?.heroModifierString = "arc zPosition(10)"
     cell.imageView?.image = ImageLibrary.thumbnail(index:indexPath.item)
     cell.textLabel?.text = "Item \(indexPath.item)"
     cell.detailTextLabel?.text = "Description \(indexPath.item)"
@@ -78,16 +78,16 @@ class ListTableViewController: UITableViewController {
 extension ListTableViewController:HeroViewControllerDelegate{
   func heroWillStartAnimatingTo(viewController: UIViewController) {
     if let _ = viewController as? GridCollectionViewController{
-      tableView.heroModifiers = "clearSubviewModifiers"
+      tableView.heroModifierString = "ignoreSubviewModifiers"
     } else {
-      tableView.heroModifiers = "cascade(0.02)"
+      tableView.heroModifierString = "cascade(0.02)"
     }
   }
   func heroWillStartAnimatingFrom(viewController: UIViewController) {
     if let _ = viewController as? GridCollectionViewController{
-      tableView.heroModifiers = "clearSubviewModifiers"
+      tableView.heroModifierString = "ignoreSubviewModifiers"
     } else {
-      tableView.heroModifiers = "cascade(0.02)"
+      tableView.heroModifierString = "cascade(0.02)"
     }
     if let vc = viewController as? ImageViewController,
       let originalCellIndex = vc.selectedIndex,
